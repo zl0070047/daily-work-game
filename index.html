@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Work - Fight the Boss & Earn Money</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+      color: #eee;
+    }
+    h1 {
+      margin-bottom: 8px;
+      font-size: 1.5rem;
+      text-shadow: 0 0 10px rgba(255,200,100,0.5);
+    }
+    .info {
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: #aaa;
+    }
+    #gameCanvas {
+      display: block;
+      background: #0d1b2a;
+      border: 3px solid #3a7ca5;
+      border-radius: 8px;
+      box-shadow: 0 0 30px rgba(58, 124, 165, 0.3);
+    }
+    .hint {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #888;
+    }
+    #startPanel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(13, 27, 42, 0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+    #startPanel.hidden { display: none; }
+    #startPanel h2 {
+      margin-bottom: 8px;
+      font-size: 1.4rem;
+    }
+    #startPanel label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+    #startPanel input[type="text"] {
+      width: 180px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #3a7ca5;
+      background: #1a2a3a;
+      color: #eee;
+    }
+    #startPanel input[type="number"] {
+      width: 80px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #3a7ca5;
+      background: #1a2a3a;
+      color: #eee;
+    }
+    #startPanel button {
+      margin-top: 10px;
+      padding: 10px 24px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      background: #3a7ca5;
+      color: #fff;
+      cursor: pointer;
+    }
+    #startPanel button:hover {
+      background: #4a8cb5;
+    }
+    #leaderboardBox {
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: rgba(26, 42, 58, 0.8);
+      border-radius: 8px;
+      border: 1px solid #3a7ca5;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    #leaderboardBox h3 {
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: #aaa;
+    }
+    #leaderboardBox table {
+      width: 100%;
+      font-size: 13px;
+      border-collapse: collapse;
+    }
+    #leaderboardBox th, #leaderboardBox td {
+      padding: 4px 8px;
+      text-align: left;
+    }
+    #leaderboardBox th { color: #7cb3d4; }
+    #leaderboardBox tr:nth-child(even) { background: rgba(0,0,0,0.2); }
+    .gameArea { display: none; }
+    .gameArea.visible { display: flex; flex-direction: column; align-items: center; }
+  </style>
+</head>
+<body>
+  <div id="startPanel">
+    <h2>Daily Work – Fight the Boss & Earn Money</h2>
+    <label>Your name: <input type="text" id="playerName" value="" placeholder="Player" maxlength="20" /></label>
+    <label>Enemy name: <input type="text" id="enemyName" value="Boss" placeholder="Boss" maxlength="20" /></label>
+    <label>Number of levels: <input type="number" id="levelCount" value="10" min="1" max="99" /></label>
+    <button type="button" id="startBtn">Start Game</button>
+    <div id="leaderboardBox">
+      <h3 id="leaderboardTitle">Leaderboard (Top 10)</h3>
+      <table id="leaderboardTable">
+        <thead><tr><th>#</th><th>Name</th><th>Score</th></tr></thead>
+        <tbody id="leaderboardBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="gameArea" class="gameArea">
+    <h1>Daily Work – Fight the Boss & Earn Money</h1>
+    <p class="info">Level <span id="levelNum">1</span> / <span id="totalLevels">10</span> &nbsp;|&nbsp; Money: <span id="score">0</span> / <span id="totalBeans">0</span> &nbsp;|&nbsp; Lives: <span id="lives">3</span></p>
+    <canvas id="gameCanvas" width="800" height="500"></canvas>
+    <p class="hint" id="hintText">Arrow keys / A D to move · Space / W to jump (double jump) · Jump on the enemy's head to defeat</p>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ========== Online leaderboard (Supabase). Replace with your project URL and anon key ==========
+      var SUPABASE_URL = 'https://qkeyqhfpgsagbrbzpcam.supabase.co';
+      var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrZXlxaGZwZ3NhZ2JyYnpwY2FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODQ3MzMsImV4cCI6MjA4NTc2MDczM30.Y7dCCzlopzHTEVIayWrweUGgSL8D3yPOdzHJHmrIUwo';
+
+      const canvas = document.getElementById('gameCanvas');
+      const ctx = canvas.getContext('2d');
+
+      const GRAVITY = 0.5;
+      const JUMP_FORCE = -19;
+      const MOVE_SPEED = 5;
+      const GROUND_Y = canvas.height - 50;
+      const PLAYER_W = 40;
+      const PLAYER_H = 48;
+      const BEAN_R = 8;
+      const MONSTER_W = 44;
+      const MONSTER_H = 40;
+      const TOP_BOUND = 0;
+
+      const player = {
+        x: 100,
+        y: GROUND_Y - PLAYER_H,
+        vx: 0,
+        vy: 0,
+        w: PLAYER_W,
+        h: PLAYER_H,
+        onGround: false,
+        faceRight: true,
+        jumpCount: 0
+      };
+
+      const BOSS_BASE_COUNT = 3;
+      const BOSS_SPEED_BASE = 3;
+
+      let LEVELS = [];
+      let totalLevelsCount = 10;
+      let enemyName = 'Boss';
+      let playerName = 'Player';
+
+      const LEADERBOARD_KEY = 'dailywork_leaderboard';
+      const LEADERBOARD_MAX = 10;
+      var cachedLeaderboardList = [];
+
+      function isSupabaseConfigured() {
+        return SUPABASE_URL && SUPABASE_ANON_KEY &&
+               SUPABASE_URL.indexOf('YOUR_') !== 0 && SUPABASE_ANON_KEY.indexOf('YOUR_') !== 0;
+      }
+
+      function getLeaderboardLocal() {
+        try {
+          var raw = localStorage.getItem(LEADERBOARD_KEY);
+          return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      function saveLeaderboardLocal(list) {
+        try {
+          localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(list));
+        } catch (e) {}
+      }
+
+      function getLeaderboard(callback) {
+        if (typeof callback !== 'function') return;
+        if (isSupabaseConfigured()) {
+          fetch(SUPABASE_URL + '/rest/v1/leaderboard?order=score.desc&limit=10', {
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+            }
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (list) {
+              cachedLeaderboardList = Array.isArray(list) ? list : [];
+              callback(cachedLeaderboardList);
+            })
+            .catch(function () {
+              cachedLeaderboardList = getLeaderboardLocal();
+              callback(cachedLeaderboardList);
+            });
+        } else {
+          cachedLeaderboardList = getLeaderboardLocal();
+          callback(cachedLeaderboardList);
+        }
+      }
+
+      function submitToLeaderboard(name, score) {
+        var n = (name || 'Player').trim() || 'Player';
+        if (isSupabaseConfigured()) {
+          fetch(SUPABASE_URL + '/rest/v1/leaderboard', {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({ name: n, score: score })
+          })
+            .then(function () {
+              getLeaderboard(function (list) {
+                if (document.getElementById('leaderboardBody')) renderLeaderboardWithList(list);
+              });
+            })
+            .catch(function () {
+              submitToLeaderboardLocal(n, score);
+            });
+        } else {
+          submitToLeaderboardLocal(n, score);
+        }
+      }
+
+      function submitToLeaderboardLocal(name, score) {
+        var list = getLeaderboardLocal();
+        list.push({ name: name || 'Player', score: score });
+        list.sort(function (a, b) { return b.score - a.score; });
+        list = list.slice(0, LEADERBOARD_MAX);
+        saveLeaderboardLocal(list);
+        cachedLeaderboardList = list;
+      }
+
+      function renderLeaderboardWithList(list) {
+        var tbody = document.getElementById('leaderboardBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        (list || []).forEach(function (entry, i) {
+          var tr = document.createElement('tr');
+          tr.innerHTML = '<td>' + (i + 1) + '</td><td>' + escapeHtml(entry.name) + '</td><td>' + Number(entry.score).toLocaleString() + '</td>';
+          tbody.appendChild(tr);
+        });
+        if (!list || list.length === 0) {
+          var tr = document.createElement('tr');
+          tr.innerHTML = '<td colspan="3" style="color:#888">No records yet. Play to rank!</td>';
+          tbody.appendChild(tr);
+        }
+      }
+
+      function renderLeaderboard() {
+        var title = document.getElementById('leaderboardTitle');
+        if (title) title.textContent = isSupabaseConfigured() ? 'Leaderboard (Top 10) — Online' : 'Leaderboard (Top 10) — Local';
+        getLeaderboard(function (list) {
+          renderLeaderboardWithList(list);
+        });
+      }
+
+      function escapeHtml(s) {
+        var div = document.createElement('div');
+        div.textContent = s;
+        return div.innerHTML;
+      }
+
+      function generateLevel(levelIndex) {
+        const beanCount = 6 + levelIndex * 2;
+        const beans = [];
+        for (let i = 0; i < beanCount; i++) {
+          const x = 120 + (i * 620 / (beanCount + 1)) + (i % 3) * 30;
+          const y = GROUND_Y - 60 - (i % 4) * 80 - Math.floor(i / 4) * 50;
+          beans.push([Math.min(760, Math.max(40, x)), Math.max(120, y)]);
+        }
+        const bossCount = BOSS_BASE_COUNT + levelIndex * 2;
+        const speed = BOSS_SPEED_BASE + levelIndex;
+        const bosses = [];
+        const step = (canvas.width - 120) / (bossCount + 1);
+        for (let i = 0; i < bossCount; i++) {
+          const x = 80 + step * (i + 1) + (i % 2) * 20;
+          bosses.push({
+            x: Math.min(canvas.width - MONSTER_W - 20, Math.max(20, x)),
+            y: GROUND_Y - MONSTER_H,
+            vx: (i % 2 === 0 ? 1 : -1) * speed,
+            w: MONSTER_W,
+            h: MONSTER_H,
+            alive: true
+          });
+        }
+        return { beans: beans, monsters: bosses };
+      }
+
+      function buildLevels(count) {
+        totalLevelsCount = Math.max(1, Math.min(99, count));
+        LEVELS = [];
+        for (let i = 0; i < totalLevelsCount; i++) {
+          LEVELS.push(generateLevel(i));
+        }
+      }
+
+      let beans = [];
+      let monsters = [];
+      let currentLevel = 0;
+      let score = 0;
+      let lives = 3;
+      let gameOver = false;
+      let levelComplete = false;
+      let allLevelsComplete = false;
+      let gameStarted = false;
+      let leaderboardSubmitted = false;
+
+      function loadLevel(levelIndex) {
+        const data = LEVELS[levelIndex];
+        if (!data) return;
+        beans = data.beans.map(function (p) {
+          return { x: p[0], y: p[1], r: BEAN_R, collected: false };
+        });
+        monsters = data.monsters.map(function (m) {
+          return { x: m.x, y: m.y, vx: m.vx, w: m.w, h: m.h, alive: true };
+        });
+      }
+
+      const keys = {};
+      document.addEventListener('keydown', function (e) {
+        keys[e.code] = true;
+        if (e.code === 'Space') e.preventDefault();
+      });
+      document.addEventListener('keyup', function (e) {
+        keys[e.code] = false;
+      });
+
+      function rectHit(a, b) {
+        return a.x < b.x + b.w && a.x + a.w > b.x &&
+               a.y < b.y + b.h && a.y + a.h > b.y;
+      }
+
+      function pointInCircle(px, py, cx, cy, r) {
+        const dx = px - cx;
+        const dy = py - cy;
+        return dx * dx + dy * dy <= r * r;
+      }
+
+      function playerTouchesBean() {
+        const px = player.x + player.w / 2;
+        const py = player.y + player.h / 2;
+        beans.forEach(function (b) {
+          if (b.collected) return;
+          if (pointInCircle(px, py, b.x, b.y, b.r + player.w / 2)) {
+            b.collected = true;
+            score += 1;
+          }
+        });
+      }
+
+      function checkStompBoss() {
+        if (player.vy <= 0) return;
+        monsters.forEach(function (m) {
+          if (!m.alive) return;
+          const playerBottom = player.y + player.h;
+          const bossTop = m.y;
+          const overlapX = player.x + player.w > m.x && player.x < m.x + m.w;
+          if (overlapX && playerBottom >= bossTop && player.y + player.h - 18 <= m.y + m.h) {
+            m.alive = false;
+            player.vy = JUMP_FORCE * 0.6;
+          }
+        });
+      }
+
+      function checkBossHurtPlayer() {
+        monsters.forEach(function (m) {
+          if (!m.alive) return;
+          if (rectHit(player, m)) {
+            lives -= 1;
+            m.alive = false;
+            player.x -= 50;
+            player.vy = -8;
+            if (player.x < 0) player.x = 0;
+          }
+        });
+      }
+
+      function update() {
+        if (!gameStarted || gameOver || levelComplete || allLevelsComplete) return;
+
+        player.vx = 0;
+        if (keys['KeyA'] || keys['ArrowLeft']) {
+          player.vx = -MOVE_SPEED;
+          player.faceRight = false;
+        }
+        if (keys['KeyD'] || keys['ArrowRight']) {
+          player.vx = MOVE_SPEED;
+          player.faceRight = true;
+        }
+
+        if (keys['Space'] || keys['KeyW'] || keys['ArrowUp']) {
+          if (player.onGround) {
+            player.vy = JUMP_FORCE;
+            player.onGround = false;
+            player.jumpCount = 1;
+          } else if (player.jumpCount === 1) {
+            player.vy = JUMP_FORCE;
+            player.jumpCount = 2;
+          }
+        }
+
+        player.x += player.vx;
+        player.y += player.vy;
+        player.vy += GRAVITY;
+
+        if (player.y < TOP_BOUND) {
+          player.y = TOP_BOUND;
+          player.vy = 0;
+        }
+        if (player.y >= GROUND_Y - player.h) {
+          player.y = GROUND_Y - player.h;
+          player.vy = 0;
+          player.onGround = true;
+          player.jumpCount = 0;
+        } else {
+          player.onGround = false;
+        }
+
+        if (player.x < 0) player.x = 0;
+        if (player.x + player.w > canvas.width) player.x = canvas.width - player.w;
+
+        playerTouchesBean();
+
+        monsters.forEach(function (m) {
+          if (!m.alive) return;
+          m.x += m.vx;
+          if (m.x <= 0 || m.x + m.w >= canvas.width) m.vx *= -1;
+        });
+
+        checkStompBoss();
+        checkBossHurtPlayer();
+
+        const totalBeans = beans.length;
+        const collected = beans.filter(function (b) { return b.collected; }).length;
+        if (totalBeans > 0 && collected >= totalBeans) {
+          if (currentLevel >= LEVELS.length - 1) {
+            allLevelsComplete = true;
+            if (!leaderboardSubmitted) {
+              leaderboardSubmitted = true;
+              var completedLevels = LEVELS.length;
+              var rankScore = completedLevels * 10000 + score;
+              submitToLeaderboard(playerName, rankScore);
+            }
+          } else {
+            levelComplete = true;
+          }
+        }
+
+        if (lives <= 0) {
+          gameOver = true;
+          if (!leaderboardSubmitted) {
+            leaderboardSubmitted = true;
+            var completedLevels = currentLevel;
+            var rankScore = completedLevels * 10000 + score;
+            submitToLeaderboard(playerName, rankScore);
+          }
+        }
+      }
+
+      function drawPlayer() {
+        const x = player.x;
+        const y = player.y;
+        const w = player.w;
+        const h = player.h;
+        const cx = x + w / 2;
+        const headY = y + 14;
+        const bodyTop = y + 22;
+        const bodyBottom = y + h - 8;
+
+        ctx.save();
+        if (!player.faceRight) {
+          ctx.translate(x + w, y);
+          ctx.scale(-1, 1);
+          ctx.translate(-x, -y);
+        }
+
+        const r = 6;
+        ctx.fillStyle = '#5c9ead';
+        ctx.beginPath();
+        ctx.moveTo(x + 6 + r, bodyTop);
+        ctx.lineTo(x + w - 6 - r, bodyTop);
+        ctx.quadraticCurveTo(x + w - 6, bodyTop, x + w - 6, bodyTop + r);
+        ctx.lineTo(x + w - 6, bodyBottom - r);
+        ctx.quadraticCurveTo(x + w - 6, bodyBottom, x + w - 6 - r, bodyBottom);
+        ctx.lineTo(x + 6 + r, bodyBottom);
+        ctx.quadraticCurveTo(x + 6, bodyBottom, x + 6, bodyBottom - r);
+        ctx.lineTo(x + 6, bodyTop + r);
+        ctx.quadraticCurveTo(x + 6, bodyTop, x + 6 + r, bodyTop);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#3d7a8c';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.fillStyle = '#f4d4a4';
+        ctx.beginPath();
+        ctx.arc(cx, headY, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#d4a574';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.fillStyle = '#4a7c59';
+        ctx.beginPath();
+        ctx.ellipse(cx, headY - 4, 12, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#1a1a1a';
+        ctx.beginPath();
+        ctx.arc(cx - 5, headY - 2, 3, 0, Math.PI * 2);
+        ctx.arc(cx + 5, headY - 2, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(cx - 5, headY - 3, 1, 0, Math.PI * 2);
+        ctx.arc(cx + 5, headY - 3, 1, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#3d5a6c';
+        ctx.beginPath();
+        ctx.ellipse(x + 12, bodyBottom + 2, 6, 4, 0, 0, Math.PI * 2);
+        ctx.ellipse(x + w - 12, bodyBottom + 2, 6, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      function drawBoss(m) {
+        const cx = m.x + m.w / 2;
+        const cy = m.y + m.h / 2;
+
+        ctx.save();
+
+        ctx.fillStyle = '#2c3e50';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, m.w / 2 - 2, m.h / 2 - 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#1a252f';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#ecf0f1';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + 6, m.w / 2 - 8, m.h / 2 - 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#c0392b';
+        ctx.beginPath();
+        ctx.moveTo(cx, m.y + 18);
+        ctx.lineTo(cx - 6, m.y + m.h - 4);
+        ctx.lineTo(cx, m.y + m.h - 8);
+        ctx.lineTo(cx + 6, m.y + m.h - 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#922b21';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.fillStyle = '#f5d0a9';
+        ctx.beginPath();
+        ctx.arc(cx, m.y + 10, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#d4a574';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.strokeStyle = '#1a1a1a';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - 10, m.y + 10);
+        ctx.lineTo(cx - 4, m.y + 12);
+        ctx.moveTo(cx + 4, m.y + 12);
+        ctx.lineTo(cx + 10, m.y + 10);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#1a1a1a';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(cx - 5, m.y + 18);
+        ctx.lineTo(cx + 5, m.y + 18);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function drawCash(b) {
+        ctx.save();
+        const w = 24;
+        const h = 12;
+        const x = b.x - w / 2;
+        const y = b.y - h / 2;
+        ctx.fillStyle = '#7cb342';
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = '#558b2f';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(x, y, w, h);
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.fillRect(x + 2, y + 2, 3, h - 4);
+        ctx.fillRect(x + w - 5, y + 2, 3, h - 4);
+        ctx.fillStyle = '#33691e';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('$', b.x, b.y);
+        ctx.restore();
+      }
+
+      function draw() {
+        ctx.fillStyle = '#0d1b2a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        if (!gameStarted) {
+          ctx.fillStyle = '#fff';
+          ctx.font = '20px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('Use the Start screen above to begin.', canvas.width / 2, canvas.height / 2);
+          return;
+        }
+
+        ctx.fillStyle = '#2d4a3e';
+        ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
+        ctx.strokeStyle = '#3a7ca5';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, GROUND_Y);
+        ctx.lineTo(canvas.width, GROUND_Y);
+        ctx.stroke();
+
+        beans.forEach(function (b) {
+          if (b.collected) return;
+          drawCash(b);
+        });
+
+        monsters.forEach(function (m) {
+          if (!m.alive) return;
+          drawBoss(m);
+        });
+
+        drawPlayer();
+
+        if (gameOver) {
+          ctx.fillStyle = 'rgba(0,0,0,0.7)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#ff6b6b';
+          ctx.font = 'bold 36px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 50);
+          ctx.fillStyle = '#fff';
+          ctx.font = '18px sans-serif';
+          ctx.fillText('Press R to restart', canvas.width / 2, canvas.height / 2 - 20);
+          var list = cachedLeaderboardList;
+          ctx.font = '14px sans-serif';
+          ctx.fillStyle = '#aaa';
+          ctx.fillText('Leaderboard (Top 5)', canvas.width / 2, canvas.height / 2 + 15);
+          (list || []).slice(0, 5).forEach(function (e, i) {
+            ctx.fillStyle = '#fff';
+            ctx.fillText((i + 1) + '. ' + e.name + ' — ' + e.score.toLocaleString(), canvas.width / 2, canvas.height / 2 + 38 + i * 20);
+          });
+        }
+
+        if (levelComplete) {
+          ctx.fillStyle = 'rgba(0,0,0,0.6)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#52b788';
+          ctx.font = 'bold 32px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('Level complete!', canvas.width / 2, canvas.height / 2 - 30);
+          ctx.fillStyle = '#fff';
+          ctx.font = '18px sans-serif';
+          ctx.fillText('Press Space or Enter for next level', canvas.width / 2, canvas.height / 2 + 10);
+        }
+
+        if (allLevelsComplete) {
+          ctx.fillStyle = 'rgba(0,0,0,0.6)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#52b788';
+          ctx.font = 'bold 36px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('You beat all levels!', canvas.width / 2, canvas.height / 2 - 50);
+          ctx.fillStyle = '#fff';
+          ctx.font = '18px sans-serif';
+          ctx.fillText('Press R to play again', canvas.width / 2, canvas.height / 2 - 20);
+          var list = cachedLeaderboardList;
+          ctx.font = '14px sans-serif';
+          ctx.fillStyle = '#aaa';
+          ctx.fillText('Leaderboard (Top 5)', canvas.width / 2, canvas.height / 2 + 15);
+          (list || []).slice(0, 5).forEach(function (e, i) {
+            ctx.fillStyle = '#fff';
+            ctx.fillText((i + 1) + '. ' + e.name + ' — ' + e.score.toLocaleString(), canvas.width / 2, canvas.height / 2 + 38 + i * 20);
+          });
+        }
+      }
+
+      function updateUI() {
+        var levelNumEl = document.getElementById('levelNum');
+        var totalLevelsEl = document.getElementById('totalLevels');
+        var scoreEl = document.getElementById('score');
+        var totalEl = document.getElementById('totalBeans');
+        var livesEl = document.getElementById('lives');
+        var hintEl = document.getElementById('hintText');
+        if (levelNumEl) levelNumEl.textContent = currentLevel + 1;
+        if (totalLevelsEl) totalLevelsEl.textContent = LEVELS.length;
+        if (scoreEl) scoreEl.textContent = score;
+        if (totalEl) totalEl.textContent = beans.length;
+        if (livesEl) livesEl.textContent = lives;
+        if (hintEl) hintEl.textContent = 'Arrow keys / A D to move · Space / W to jump (double jump) · Collect money · Jump on the ' + enemyName + "'s head to defeat";
+      }
+
+      function goNextLevel() {
+        currentLevel += 1;
+        levelComplete = false;
+        player.x = 100;
+        player.y = GROUND_Y - PLAYER_H;
+        player.vx = 0;
+        player.vy = 0;
+        player.onGround = true;
+        player.faceRight = true;
+        player.jumpCount = 0;
+        loadLevel(currentLevel);
+      }
+
+      function restart() {
+        currentLevel = 0;
+        score = 0;
+        lives = 3;
+        gameOver = false;
+        levelComplete = false;
+        allLevelsComplete = false;
+        player.x = 100;
+        player.y = GROUND_Y - PLAYER_H;
+        player.vx = 0;
+        player.vy = 0;
+        player.onGround = true;
+        player.faceRight = true;
+        player.jumpCount = 0;
+        buildLevels(totalLevelsCount);
+        loadLevel(0);
+        leaderboardSubmitted = false;
+      }
+
+      document.getElementById('startBtn').addEventListener('click', function () {
+        var pnInput = document.getElementById('playerName');
+        var nameInput = document.getElementById('enemyName');
+        var levelInput = document.getElementById('levelCount');
+        playerName = (pnInput && pnInput.value.trim()) ? pnInput.value.trim() : 'Player';
+        enemyName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : 'Boss';
+        var count = parseInt(levelInput && levelInput.value ? levelInput.value : 10, 10);
+        if (isNaN(count) || count < 1) count = 10;
+        if (count > 99) count = 99;
+        buildLevels(count);
+        loadLevel(0);
+        gameStarted = true;
+        document.getElementById('startPanel').classList.add('hidden');
+        document.getElementById('gameArea').classList.add('visible');
+        updateUI();
+      });
+
+      renderLeaderboard();
+
+      document.addEventListener('keydown', function (e) {
+        if (gameOver && e.code === 'KeyR') {
+          e.preventDefault();
+          restart();
+        }
+        if (allLevelsComplete && e.code === 'KeyR') {
+          e.preventDefault();
+          restart();
+        }
+        if (levelComplete && (e.code === 'Space' || e.code === 'Enter')) {
+          e.preventDefault();
+          goNextLevel();
+        }
+      });
+
+      function loop() {
+        update();
+        draw();
+        if (gameStarted) updateUI();
+        requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>
