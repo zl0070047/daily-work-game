@@ -4,14 +4,22 @@
 
 ---
 
+## 中国用户建议（必读）
+
+- **部署站点**：优先用 **Gitee 码云 Pages**（方式 D）或 **GitHub Pages**（方式 A），国内访问快、**无需 VPN**。不要用 Vercel，国内常需 VPN 或不稳定。
+- **代码托管**：可用 **GitHub**（第五步）或 **Gitee 码云**（国内注册 https://gitee.com ，再创建仓库并推送代码，第六步选 Gitee Pages）。
+- **在线排行榜（Supabase）**：Supabase 服务器在国外，国内注册或打开 Supabase 网站若较慢，可多刷新或换时间段；游戏部署好后，国内玩家打开你的游戏链接一般能正常玩，排行榜可能略慢一两秒属正常。若完全打不开 Supabase，可先不填 URL 和 Key，游戏照玩，排行榜仅本地保存。
+
+---
+
 ## 第一步：注册 Supabase（免费，用来存排行榜）
 
-1. 打开浏览器，访问：**https://supabase.com**
+1. 打开浏览器，访问：**https://supabase.com**（国外服务，国内打开慢可多等几秒或换时间段）。
 2. 点击右上角 **Start your project**，用 GitHub 或邮箱注册并登录。
 3. 登录后点击 **New Project**：
    - **Name**：随便填，例如 `daily-work-game`
    - **Database Password**：设一个密码并**记住**（以后改设置会用到）
-   - **Region**：选离你近的（如 Singapore）
+   - **Region**：选 **Singapore**（离中国近，延迟较低）
    - 点击 **Create new project**，等一两分钟创建完成。
 
 ---
@@ -58,7 +66,11 @@
 
 ---
 
-## 第五步：把项目放到 GitHub（方便后面部署）
+## 第五步：把项目放到代码托管（GitHub 或 Gitee）
+
+**选一种即可**：用 GitHub 则第六步选方式 A/B/C；用 Gitee 则第六步选方式 D（推荐国内用户）。
+
+### 选项 1：GitHub
 
 1. 如果还没有 GitHub 账号，先去 **https://github.com** 注册。
 2. 登录后点击右上角 **+** → **New repository**。
@@ -78,21 +90,39 @@
 
    如果提示要登录 GitHub，按提示用浏览器或令牌登录即可。
 
+### 选项 2：Gitee 码云（国内用户推荐）
+
+1. 注册并登录 **https://gitee.com** 。
+2. 右上角 **+** → **新建仓库**，仓库名填 `daily-work-game`，选 **公开**，不勾选「使用 Readme 文件初始化」，点 **创建**。
+3. 在终端进入游戏文件夹，执行（把 `你的gitee用户名` 换成你的 Gitee 用户名）：
+
+   ```bash
+   cd "你的游戏所在文件夹路径"
+   git init
+   git add index.html readme.md DEPLOY.md DEPLOY_ONLINE.md supabase_leaderboard.sql
+   git commit -m "Daily Work game with online leaderboard"
+   git branch -M main
+   git remote add origin https://gitee.com/你的gitee用户名/daily-work-game.git
+   git push -u origin main
+   ```
+
+   然后第六步选 **方式 D：Gitee 码云 Pages**。
+
 ---
 
 ## 第六步：选一种方式部署到网上
 
-任选其一即可。
+任选其一即可。**中国用户请优先用方式 A（GitHub Pages）或方式 D（Gitee 码云 Pages），国内无需 VPN、访问稳定。**
 
-### 方式 A：Vercel（推荐，最简单）
+### 方式 A：GitHub Pages（国内可用，无需 VPN）
 
-1. 打开 **https://vercel.com**，用 GitHub 登录。
-2. 点击 **Add New…** → **Project**。
-3. 在列表里选中你刚创建的 **daily-work-game** 仓库，点 **Import**。
-4. **Project Name** 不用改，直接点 **Deploy**。
-5. 等几十秒，部署完成后会给你一个地址，例如：  
-   **https://daily-work-game.vercel.app**  
-   点进去就是你的游戏，排行榜已是**在线**的（所有人看到同一份）。
+1. 在 GitHub 上打开你的 **daily-work-game** 仓库。
+2. 点 **Settings** → 左侧 **Pages**。
+3. 在 **Source** 里选 **Deploy from a branch**。
+4. **Branch** 选 **main**，**Folder** 选 **/ (root)**，点 **Save**。
+5. 等 1～2 分钟，你的游戏地址是：  
+   **https://你的用户名.github.io/daily-work-game/**  
+   国内访问一般可用，排行榜在线。
 
 ### 方式 B：Netlify
 
@@ -103,15 +133,26 @@
    **https://xxxxx.netlify.app**  
    点进去即可玩游戏，排行榜在线。
 
-### 方式 C：GitHub Pages
+### 方式 C：Vercel（不推荐国内用户）
 
-1. 在 GitHub 上打开你的 **daily-work-game** 仓库。
-2. 点 **Settings** → 左侧 **Pages**。
-3. 在 **Source** 里选 **Deploy from a branch**。
-4. **Branch** 选 **main**，**Folder** 选 **/ (root)**，点 **Save**。
-5. 等 1～2 分钟，你的游戏地址是：  
-   **https://你的用户名.github.io/daily-work-game/**  
-   排行榜同样是在线的。
+国内访问 Vercel 常需 VPN 或不稳定，**中国用户请用方式 A 或 D**。
+
+1. 打开 **https://vercel.com**，用 GitHub 登录。
+2. 点击 **Add New…** → **Project**。
+3. 在列表里选中你刚创建的 **daily-work-game** 仓库，点 **Import**。
+4. **Project Name** 不用改，直接点 **Deploy**。
+5. 等几十秒，部署完成后会给你一个地址，例如：  
+   **https://daily-work-game.vercel.app**
+
+### 方式 D：Gitee 码云 Pages（推荐国内用户，访问快、无需 VPN）
+
+若你**第五步已选 Gitee 并推送代码**，从下面第 4 步开始；否则先按**第五步 → 选项 2** 在 Gitee 创建仓库并推送。
+
+4. 在 Gitee 打开你的 **daily-work-game** 仓库，点 **服务** → **Gitee Pages**。
+5. **部署来源**选 **master** 或 **main**（和你推送的分支一致），**目录**选 **根目录**，点 **启动**。
+6. 等 1～2 分钟，你的游戏地址是：  
+   **https://你的gitee用户名.gitee.io/daily-work-game/**  
+   国内访问快、无需 VPN；在线排行榜（Supabase）照常可用。
 
 ---
 
@@ -141,3 +182,6 @@
 
 - **不想用 Supabase？**  
   不填 URL 和 Key（保持 `YOUR_SUPABASE_URL` / `YOUR_SUPABASE_ANON_KEY`），游戏仍可正常玩，排行榜会退成本地（仅自己浏览器可见）。
+
+- **中国用户 / 担心 Vercel 要 VPN？**  
+  用 **Gitee 码云 Pages**（第五步选 Gitee + 第六步方式 D）或 **GitHub Pages**（方式 A），国内无需 VPN、访问更稳定。
