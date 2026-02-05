@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daily Work - Fight the Boss & Earn Money</title>
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9702001946812201"
+     crossorigin="anonymous"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -118,6 +121,15 @@
     #leaderboardBox tr:nth-child(even) { background: rgba(0,0,0,0.2); }
     .gameArea { display: none; }
     .gameArea.visible { display: flex; flex-direction: column; align-items: center; }
+    .ad-container {
+      margin-top: 16px;
+      text-align: center;
+      min-height: 100px;
+    }
+    .ad-container ins {
+      display: block;
+      margin: 0 auto;
+    }
   </style>
 </head>
 <body>
@@ -134,6 +146,17 @@
         <tbody id="leaderboardBody"></tbody>
       </table>
     </div>
+    <div class="ad-container">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-9702001946812201"
+           data-ad-slot="1234567890"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>
+           (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+    </div>
   </div>
 
   <div id="gameArea" class="gameArea">
@@ -141,6 +164,17 @@
     <p class="info">Level <span id="levelNum">1</span> / <span id="totalLevels">10</span> &nbsp;|&nbsp; Money: <span id="score">0</span> / <span id="totalBeans">0</span> &nbsp;|&nbsp; Lives: <span id="lives">3</span></p>
     <canvas id="gameCanvas" width="800" height="500"></canvas>
     <p class="hint" id="hintText">Arrow keys / A D to move · Space / W to jump (double jump) · Jump on the enemy's head to defeat</p>
+    <div class="ad-container">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-9702001946812201"
+           data-ad-slot="1234567890"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>
+           (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+    </div>
   </div>
 
   <script>
