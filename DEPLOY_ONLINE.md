@@ -6,9 +6,9 @@
 
 ## 中国用户建议（必读）
 
-- **部署站点**：优先用 **Gitee 码云 Pages**（方式 D）或 **GitHub Pages**（方式 A），国内访问快、**无需 VPN**。不要用 Vercel，国内常需 VPN 或不稳定。
-- **代码托管**：可用 **GitHub**（第五步）或 **Gitee 码云**（国内注册 https://gitee.com ，再创建仓库并推送代码，第六步选 Gitee Pages）。
-- **在线排行榜（Supabase）**：Supabase 服务器在国外，国内注册或打开 Supabase 网站若较慢，可多刷新或换时间段；游戏部署好后，国内玩家打开你的游戏链接一般能正常玩，排行榜可能略慢一两秒属正常。若完全打不开 Supabase，可先不填 URL 和 Key，游戏照玩，排行榜仅本地保存。
+- **部署站点**：优先用 **GitHub Pages**（方式 A）或 **Cloudflare Pages**（方式 D），国内多数情况可访问、**无需 VPN**。不要用 Vercel，国内常需 VPN 或不稳定。
+- **说明**：**Gitee 码云 Pages 已于 2024 年下线**，仓库里不再有「服务 → Gitee Pages」。代码仍可放在 Gitee 托管，但**部署**请用 GitHub Pages 或 Cloudflare Pages。
+- **在线排行榜（Supabase）**：Supabase 服务器在国外，国内注册或打开若较慢可多刷新；游戏部署好后，国内玩家打开你的游戏链接一般能正常玩，排行榜可能略慢一两秒属正常。若完全打不开 Supabase，可不填 URL 和 Key，游戏照玩，排行榜仅本地保存。
 
 ---
 
@@ -68,9 +68,9 @@
 
 ## 第五步：把项目放到代码托管（GitHub 或 Gitee）
 
-**选一种即可**：用 GitHub 则第六步选方式 A/B/C；用 Gitee 则第六步选方式 D（推荐国内用户）。
+**部署必须用 GitHub 或导入到 Cloudflare**：Gitee 只能托管代码，不能做静态站发布（Gitee Pages 已下线）。推荐把代码推到 **GitHub**，第六步用 **GitHub Pages**（方式 A）或 **Cloudflare Pages**（方式 D）。
 
-### 选项 1：GitHub
+### 选项 1：GitHub（推荐，部署用方式 A 或 D）
 
 1. 如果还没有 GitHub 账号，先去 **https://github.com** 注册。
 2. 登录后点击右上角 **+** → **New repository**。
@@ -90,11 +90,10 @@
 
    如果提示要登录 GitHub，按提示用浏览器或令牌登录即可。
 
-### 选项 2：Gitee 码云（国内用户推荐）
+### 选项 2：Gitee 码云（仅托管代码，部署仍需 GitHub 或 Cloudflare）
 
-1. 注册并登录 **https://gitee.com** 。
-2. 右上角 **+** → **新建仓库**，仓库名填 `daily-work-game`，选 **公开**，不勾选「使用 Readme 文件初始化」，点 **创建**。
-3. 在终端进入游戏文件夹，执行（把 `你的gitee用户名` 换成你的 Gitee 用户名）：
+1. 注册并登录 **https://gitee.com** ，右上角 **+** → **新建仓库**，仓库名填 `daily-work-game`，选 **公开**，不勾选「使用 Readme 文件初始化」，点 **创建**。
+2. 在终端进入游戏文件夹，执行（把 `你的gitee用户名` 换成你的 Gitee 用户名）：
 
    ```bash
    cd "你的游戏所在文件夹路径"
@@ -106,13 +105,13 @@
    git push -u origin main
    ```
 
-   然后第六步选 **方式 D：Gitee 码云 Pages**。
+3. **Gitee 没有 Pages 了**，要发布网站请把同一份代码再推到 **GitHub**（新增一个 remote 并 push），然后第六步用 **方式 A（GitHub Pages）** 或 **方式 D（Cloudflare Pages）** 部署。
 
 ---
 
 ## 第六步：选一种方式部署到网上
 
-任选其一即可。**中国用户请优先用方式 A（GitHub Pages）或方式 D（Gitee 码云 Pages），国内无需 VPN、访问稳定。**
+任选其一即可。**中国用户请优先用方式 A（GitHub Pages）或方式 D（Cloudflare Pages），国内多数情况无需 VPN。**
 
 ### 方式 A：GitHub Pages（国内可用，无需 VPN）
 
@@ -120,8 +119,15 @@
 2. 点 **Settings** → 左侧 **Pages**。
 3. 在 **Source** 里选 **Deploy from a branch**。
 4. **Branch** 选 **main**，**Folder** 选 **/ (root)**，点 **Save**。
-5. 等 1～2 分钟，你的游戏地址是：  
+5. **重要**：确保仓库根目录有 **`.nojekyll`** 文件（空文件即可），用来禁用 Jekyll，否则可能显示 "Hello World" 而不是游戏。如果没有，在本地创建 `.nojekyll`（空文件），然后：
+   ```bash
+   git add .nojekyll
+   git commit -m "Add .nojekyll to disable Jekyll"
+   git push
+   ```
+6. 等 1～2 分钟，你的游戏地址是：  
    **https://你的用户名.github.io/daily-work-game/**  
+   （注意：访问的是 `github.io` 域名，不是仓库页面 `github.com`）  
    国内访问一般可用，排行榜在线。
 
 ### 方式 B：Netlify
@@ -144,15 +150,34 @@
 5. 等几十秒，部署完成后会给你一个地址，例如：  
    **https://daily-work-game.vercel.app**
 
-### 方式 D：Gitee 码云 Pages（推荐国内用户，访问快、无需 VPN）
+### 方式 D：Cloudflare Pages（推荐，国内多可访问、无需 VPN）
 
-若你**第五步已选 Gitee 并推送代码**，从下面第 4 步开始；否则先按**第五步 → 选项 2** 在 Gitee 创建仓库并推送。
+1. 打开 **https://dash.cloudflare.com** 并登录（无账号可免费注册）。
+2. 左侧选 **Workers & Pages** → **Create** → **Pages** → **Connect to Git**。
+3. 选 **GitHub**（或 GitHub 授权），选中 **daily-work-game** 仓库，点 **Begin setup**。
+4. 在 **Build configuration** 里**务必**这样设（本项目是纯静态，没有构建步骤，否则会报 deploy 错误）：
+   - **Framework preset**：选 **None**（不要选 Vue/React 等）。
+   - **Build command**：**留空**（不要填 `npm run build`）。
+   - **Deploy command**：如果**必须填**，填 `echo "Deploying static site"`（不要填 `npx wrangler deploy`，那是给 Workers 用的，会报错）。如果允许留空就留空。
+   - **Build output directory**：**留空**（表示用仓库根目录）。
+   - **Path**：填 `/` 或留空；**Branch** 选 **main**。
+5. 点 **Save and Deploy**。等 1～2 分钟，会给你一个地址，例如：  
+   **https://daily-work-game.xxx.pages.dev**  
+   国内多数情况可访问，无需 VPN；在线排行榜照常可用。
 
-4. 在 Gitee 打开你的 **daily-work-game** 仓库，点 **服务** → **Gitee Pages**。
-5. **部署来源**选 **master** 或 **main**（和你推送的分支一致），**目录**选 **根目录**，点 **启动**。
-6. 等 1～2 分钟，你的游戏地址是：  
-   **https://你的gitee用户名.gitee.io/daily-work-game/**  
-   国内访问快、无需 VPN；在线排行榜（Supabase）照常可用。
+6. **绑定自定义域名**（可选）：  
+   如果域名在 Cloudflare 管理：
+   - 在 Pages 项目页面点 **Custom domains** → **Set up a custom domain**。
+   - 输入你的域名（如 `game.yourdomain.com` 或 `yourdomain.com`），点 **Continue**。
+   - Cloudflare 会自动添加 DNS 记录（CNAME），等几分钟生效即可。
+   
+   如果域名不在 Cloudflare：
+   - 在域名 DNS 管理里添加 **CNAME** 记录：
+     - **Name**：`game`（或 `@` 表示根域名）
+     - **Value**：`daily-work-game.pages.dev`（你的 Pages 地址）
+   - 然后在 Pages 项目里点 **Custom domains** → **Set up a custom domain**，输入域名，Cloudflare 会验证 DNS 记录。
+
+**说明**：Gitee 码云 **Pages 已于 2024 年下线**，仓库里不再有「服务 → Gitee Pages」。若你代码在 Gitee，可把同一项目再推到 GitHub 后用本页方式 A 或 D 部署。
 
 ---
 
@@ -183,5 +208,37 @@
 - **不想用 Supabase？**  
   不填 URL 和 Key（保持 `YOUR_SUPABASE_URL` / `YOUR_SUPABASE_ANON_KEY`），游戏仍可正常玩，排行榜会退成本地（仅自己浏览器可见）。
 
-- **中国用户 / 担心 Vercel 要 VPN？**  
-  用 **Gitee 码云 Pages**（第五步选 Gitee + 第六步方式 D）或 **GitHub Pages**（方式 A），国内无需 VPN、访问更稳定。
+- **中国用户 / 找不到 Gitee Pages？**  
+  **Gitee Pages 已于 2024 年下线**，所以仓库里没有「服务 → Gitee Pages」。请改用 **GitHub Pages**（第六步方式 A）或 **Cloudflare Pages**（方式 D）部署。
+
+- **报错 "Failed: error occurred while running deploy command"？**  
+  本游戏是**纯静态 HTML**，没有构建步骤。请检查部署平台的 **Build 设置**：  
+  - **Cloudflare Pages**（最常见问题）：
+    - **Framework preset** 选 **None**。
+    - **Build command**：**留空**（不要填任何东西）。
+    - **Deploy command**：如果界面**要求必填**，填 `echo "Deploying static site"`（不要填 `npx wrangler deploy`，那是给 Cloudflare Workers 用的，会报错）。如果允许留空就留空。
+    - **Build output directory**：留空。
+    - **Path**：填 `/` 或留空。
+    改完后点 **Save**，然后在 **Deployments** 里点 **Retry** 或重新部署。  
+  - **Netlify**：在 Site settings → Build & deploy → Build 里，**Build command** 留空，**Publish directory** 填 `/` 或留空。  
+  - **Vercel**：导入时 Framework 选 **Other** 或 **None**，不要选 Next/Nuxt 等；Build 命令留空。  
+  改完后在对应平台点 **Retry** 或 **Redeploy**。
+
+- **GitHub Pages 显示 "Hello World" 而不是游戏？**  
+  这是因为 GitHub Pages 默认启用了 Jekyll。解决：
+  1. 在项目根目录创建 **`.nojekyll`** 文件（空文件即可，我已经帮你创建了）。
+  2. 推送这个文件到 GitHub：
+     ```bash
+     git add .nojekyll
+     git commit -m "Add .nojekyll to disable Jekyll"
+     git push
+     ```
+  3. 等 1～2 分钟，刷新你的 Pages 地址（`https://你的用户名.github.io/daily-work-game/`）。
+  4. 确认访问的是 **`github.io`** 域名，不是仓库页面 `github.com`。
+
+- **Cloudflare Pages 报错 "An internal error prevented the form from submitting"？**  
+  这是 Cloudflare 的临时错误。可以尝试：
+  1. **刷新页面**，重新填写配置再提交。
+  2. **清除浏览器缓存**，或换一个浏览器/无痕模式试试。
+  3. **稍等几分钟**再试（可能是 Cloudflare 服务器临时问题）。
+  4. **改用 GitHub Pages**（方式 A，更简单，不需要这些 Build 配置，推荐）：在 GitHub 仓库里点 **Settings → Pages**，Source 选 **Deploy from a branch**，Branch 选 **main**，Folder 选 **/ (root)**，点 **Save** 即可。等 1～2 分钟就能访问。
